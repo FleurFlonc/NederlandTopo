@@ -13,11 +13,13 @@ interface Props {
   question: Question
   exerciseType: ExerciseType
   answered: boolean
+  klickWasCorrect?: boolean | null
+  klickClickedKey?: string | null
   onAnswer: (isCorrect: boolean, selectedKey?: string) => void
   onNext: () => void
 }
 
-export default function QuestionPanel({ question, exerciseType, answered, onAnswer, onNext }: Props) {
+export default function QuestionPanel({ question, exerciseType, answered, klickWasCorrect = null, klickClickedKey = null, onAnswer, onNext }: Props) {
   const [selected, setSelected] = useState<string | null>(null)
   const [typed, setTyped] = useState('')
   const [options] = useState(() => getOptions(question))
@@ -70,21 +72,35 @@ export default function QuestionPanel({ question, exerciseType, answered, onAnsw
   // --- Shared feedback message ---
   function FeedbackMsg() {
     if (!answered) return null
+
+    // Klik mode: use result passed from parent
+    if (exerciseType === 'klik') {
+      const isCorrect = klickWasCorrect
+      const correctLabel = question.type === 'name' ? correctProv.name : correctProv.capital
+      const clickedProv = klickClickedKey ? PROVINCES.find(p => p.key === klickClickedKey) : null
+      const clickedLabel = clickedProv
+        ? (question.type === 'name' ? clickedProv.name : clickedProv.capital)
+        : correctLabel
+      return (
+        <div className={`mt-4 p-3 rounded-xl text-sm font-medium ${isCorrect ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-700'}`}>
+          {isCorrect
+            ? <>Goed! Dit is <strong>{correctLabel}</strong></>
+            : <>Helaas, je klikt <strong>{clickedLabel}</strong> aan.</>
+          }
+        </div>
+      )
+    }
+
     const wasCorrect = selected
       ? PROVINCES.find(p => question.type === 'name' ? p.name === selected : p.capital === selected)?.key === question.provinceKey
-      : exerciseType === 'typen'
-        ? normalize(typed) === normalize(correctAnswer)
-        : null // klik — determined by parent
+      : normalize(typed) === normalize(correctAnswer)
 
     return (
-      <div className={`mt-4 p-3 rounded-xl text-sm font-medium ${wasCorrect === false ? 'bg-red-50 text-red-700' : wasCorrect === true ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
-        {wasCorrect === false && (
-          <>Het juiste antwoord is: <strong>{correctAnswer}</strong></>
-        )}
-        {wasCorrect === true && <>Goed gedaan! 🎉</>}
-        {wasCorrect === null && (
-          <>Antwoord: <strong>{correctAnswer}</strong> ({correctProv.name})</>
-        )}
+      <div className={`mt-4 p-3 rounded-xl text-sm font-medium ${wasCorrect === false ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+        {wasCorrect === false
+          ? <>Fout! Het juiste antwoord is: <strong>{correctAnswer}</strong></>
+          : <>Goed gedaan!</>
+        }
       </div>
     )
   }

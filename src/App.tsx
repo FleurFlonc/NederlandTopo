@@ -26,6 +26,8 @@ export default function App() {
   const [wrong, setWrong] = useState(0)
   const [feedbackMap, setFeedbackMap] = useState<Record<string, FeedbackState>>({})
   const [answered, setAnswered] = useState(false)
+  const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null)
+  const [lastClickedKey, setLastClickedKey] = useState<string | null>(null)
 
   const currentQuestion = questions[currentIndex]
 
@@ -48,6 +50,8 @@ export default function App() {
 
   const handleAnswer = useCallback((isCorrect: boolean, selectedKey?: string) => {
     setAnswered(true)
+    setLastAnswerCorrect(isCorrect)
+    setLastClickedKey(selectedKey ?? null)
     const q = questions[currentIndex]
     if (isCorrect) {
       setCorrect(c => c + 1)
@@ -75,6 +79,8 @@ export default function App() {
     setCurrentIndex(next)
     setFeedbackMap(buildInitialFeedback(questions, next, exerciseType))
     setAnswered(false)
+    setLastAnswerCorrect(null)
+    setLastClickedKey(null)
   }, [currentIndex, questions, exerciseType])
 
   const reset = useCallback(() => setScreen('start'), [])
@@ -133,6 +139,8 @@ export default function App() {
             question={currentQuestion}
             exerciseType={exerciseType}
             answered={answered}
+            klickWasCorrect={lastAnswerCorrect}
+            klickClickedKey={lastClickedKey}
             onAnswer={handleAnswer}
             onNext={nextQuestion}
           />
