@@ -13,13 +13,14 @@ import HUD from './components/HUD'
 import QuestionPanel from './components/QuestionPanel'
 import EndScreen from './components/EndScreen'
 
-const TOTAL = 50
-
 type Screen = 'start' | 'game' | 'end'
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('start')
   const [exerciseType, setExerciseType] = useState<ExerciseType>('meerkeuze')
+  const [total, setTotal] = useState<number>(20)
+  const [wrongQuestions, setWrongQuestions] = useState<Question[]>([])
+  const [isRetryRound, setIsRetryRound] = useState(false)
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [correct, setCorrect] = useState(0)
@@ -36,13 +37,29 @@ export default function App() {
     return type !== 'klik' ? { [qs[idx].provinceKey]: 'active' } : {}
   }
 
-  const startGame = useCallback((subject: Subject, exType: ExerciseType) => {
-    const qs = generateQuestions(subject, TOTAL)
+  const startGame = useCallback((subject: Subject, exType: ExerciseType, sessionTotal: 20 | 30) => {
+    const qs = generateQuestions(subject, sessionTotal)
+    setTotal(sessionTotal as number)
     setExerciseType(exType)
     setQuestions(qs)
     setCurrentIndex(0)
     setCorrect(0)
     setWrong(0)
+    setWrongQuestions([])
+    setIsRetryRound(false)
+    setFeedbackMap(buildInitialFeedback(qs, 0, exType))
+    setAnswered(false)
+    setScreen('game')
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const startRetry = useCallback((qs: Question[], exType: ExerciseType) => {
+    setQuestions(qs)
+    setTotal(qs.length)
+    setCurrentIndex(0)
+    setCorrect(0)
+    setWrong(0)
+    setWrongQuestions([])
+    setIsRetryRound(true)
     setFeedbackMap(buildInitialFeedback(qs, 0, exType))
     setAnswered(false)
     setScreen('game')
@@ -58,6 +75,7 @@ export default function App() {
       setFeedbackMap({ [q.provinceKey]: 'correct' })
     } else {
       setWrong(w => w + 1)
+      setWrongQuestions(prev => [...prev, q])
       const map: Record<string, FeedbackState> = { [q.provinceKey]: 'correct' }
       if (selectedKey && selectedKey !== q.provinceKey) map[selectedKey] = 'wrong'
       setFeedbackMap(map)
@@ -72,7 +90,7 @@ export default function App() {
 
   const nextQuestion = useCallback(() => {
     const next = currentIndex + 1
-    if (next >= TOTAL) {
+    if (next >= total) {
       setScreen('end')
       return
     }
@@ -81,13 +99,23 @@ export default function App() {
     setAnswered(false)
     setLastAnswerCorrect(null)
     setLastClickedKey(null)
-  }, [currentIndex, questions, exerciseType])
+  }, [currentIndex, questions, exerciseType, total])
 
   const reset = useCallback(() => setScreen('start'), [])
 
   // ---- Screens ----
   if (screen === 'start') return <StartScreen onStart={startGame} />
-  if (screen === 'end')   return <EndScreen correct={correct} total={TOTAL} onRestart={reset} />
+  if (screen === 'end')   return (
+    <EndScreen
+      correct={correct}
+      total={total}
+      wrongQuestions={wrongQuestions}
+      isRetryRound={isRetryRound}
+      exerciseType={exerciseType}
+      onRestart={reset}
+      onRetry={startRetry}
+    />
+  )
 
   if (!currentQuestion) return null
 
@@ -106,7 +134,7 @@ export default function App() {
         correct={correct}
         wrong={wrong}
         current={currentIndex + 1}
-        total={TOTAL}
+        total={total}
         onReset={reset}
       />
 
@@ -147,7 +175,7 @@ export default function App() {
 
           {/* Question counter */}
           <p className="text-center text-xs text-gray-300 mt-6">
-            Vraag {currentIndex + 1} van {TOTAL}
+            Vraag {currentIndex + 1} van {total}
           </p>
         </div>
       </div>

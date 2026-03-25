@@ -1,7 +1,7 @@
 import type { Subject, ExerciseType } from '../utils/game'
 
 interface Props {
-  onStart: (subject: Subject, exerciseType: ExerciseType) => void
+  onStart: (subject: Subject, exerciseType: ExerciseType, total: 20 | 30) => void
 }
 
 const SUBJECTS: { value: Subject; label: string; emoji: string; desc: string }[] = [
@@ -21,6 +21,7 @@ import { useState } from 'react'
 export default function StartScreen({ onStart }: Props) {
   const [subject, setSubject] = useState<Subject>('provincies')
   const [exercise, setExercise] = useState<ExerciseType>('meerkeuze')
+  const [total, setTotal] = useState<20 | 30>(20)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -82,12 +83,38 @@ export default function StartScreen({ onStart }: Props) {
           </div>
         </div>
 
+        {/* Session length */}
+        <div className="mb-8">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Aantal vragen
+          </h2>
+          <div className="grid grid-cols-2 gap-2">
+            {([20, 30] as const).map(n => (
+              <button
+                key={n}
+                onClick={() => setTotal(n)}
+                className={`
+                  flex flex-col items-center p-3 rounded-xl border-2 transition-all text-sm font-medium
+                  ${total === n
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'}
+                `}
+              >
+                <span className="text-2xl font-bold">{n}</span>
+                <span className="text-xs font-normal text-gray-400 mt-0.5">
+                  {n === 20 ? 'elke provincie 1×' : 'elke provincie 2×'}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Start button */}
         <button
-          onClick={() => onStart(subject, exercise)}
+          onClick={() => onStart(subject, exercise, total)}
           className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-lg font-semibold rounded-2xl transition-colors shadow-md"
         >
-          Start — 50 vragen →
+          Start — {total} vragen →
         </button>
       </div>
     </div>

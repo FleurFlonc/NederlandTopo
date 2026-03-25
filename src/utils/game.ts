@@ -19,17 +19,43 @@ export function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-export function generateQuestions(subject: Subject, total = 50): Question[] {
-  const keys = PROVINCES.map(p => p.key)
-  // Ensure each province appears at least once
-  const base = shuffle([...keys])
-  const pool = [...base]
-  while (pool.length < total) {
-    pool.push(keys[Math.floor(Math.random() * keys.length)])
+function noConsecutiveDuplicates(arr: string[]): string[] {
+  const result = [...arr]
+  for (let i = 1; i < result.length; i++) {
+    if (result[i] === result[i - 1]) {
+      for (let j = i + 1; j < result.length; j++) {
+        if (result[j] !== result[i]) {
+          ;[result[i], result[j]] = [result[j], result[i]]
+          break
+        }
+      }
+    }
   }
-  const allKeys = shuffle(pool).slice(0, total)
+  return result
+}
 
-  return allKeys.map((provinceKey, i) => ({
+export function generateQuestions(subject: Subject, total: 20 | 30 = 20): Question[] {
+  const keys = PROVINCES.map(p => p.key)
+
+  // 20 vragen → elke provincie minstens 1x (1 ronde van 12)
+  // 30 vragen → elke provincie minstens 2x (2 rondes van 12)
+  const rounds = total === 30 ? 2 : 1
+  let pool: string[] = []
+  for (let r = 0; r < rounds; r++) {
+    pool = [...pool, ...shuffle([...keys])]
+  }
+
+  // Vul resterende slots willekeurig aan (nooit zelfde als vorige)
+  while (pool.length < total) {
+    const last = pool[pool.length - 1]
+    const others = keys.filter(k => k !== last)
+    pool.push(others[Math.floor(Math.random() * others.length)])
+  }
+
+  // Zorg dat nooit twee dezelfde vragen achter elkaar staan
+  pool = noConsecutiveDuplicates(pool.slice(0, total))
+
+  return pool.map((provinceKey, i) => ({
     provinceKey,
     type: (
       subject === 'provincies' ? 'name' :
