@@ -1,4 +1,5 @@
 import type { Subject, ExerciseType } from '../utils/game'
+import { supabase } from '../lib/supabase'
 
 interface Props {
   onStart: (subject: Subject, exerciseType: ExerciseType, total: 20 | 30) => void
@@ -25,7 +26,15 @@ export default function StartScreen({ onStart }: Props) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-lg">
+      <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-lg relative">
+        {/* Logout */}
+        <button
+          onClick={() => supabase.auth.signOut()}
+          className="absolute top-5 right-5 text-sm text-gray-400 hover:text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          Uitloggen
+        </button>
+
         {/* Title */}
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🇳🇱</div>
