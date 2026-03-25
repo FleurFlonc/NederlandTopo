@@ -1,4 +1,7 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import type { User } from '@supabase/supabase-js'
+import { supabase } from './lib/supabase'
+import LoginScreen from './components/LoginScreen'
 import {
   type Subject,
   type ExerciseType,
@@ -16,6 +19,19 @@ import EndScreen from './components/EndScreen'
 type Screen = 'start' | 'game' | 'end'
 
 export default function App() {
+  const [user, setUser] = useState<User | null | undefined>(undefined)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (user === undefined) return null // loading
+  if (user === null) return <LoginScreen />
+
   const [screen, setScreen] = useState<Screen>('start')
   const [exerciseType, setExerciseType] = useState<ExerciseType>('meerkeuze')
   const [total, setTotal] = useState<number>(20)
