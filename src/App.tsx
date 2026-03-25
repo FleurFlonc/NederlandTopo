@@ -18,20 +18,11 @@ import EndScreen from './components/EndScreen'
 
 type Screen = 'start' | 'game' | 'end'
 
-export default function App() {
-  const [user, setUser] = useState<User | null | undefined>(undefined)
+function buildInitialFeedback(qs: Question[], idx: number, type: ExerciseType): Record<string, FeedbackState> {
+  return type !== 'klik' ? { [qs[idx].provinceKey]: 'active' } : {}
+}
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null)
-    })
-    return () => subscription.unsubscribe()
-  }, [])
-
-  if (user === undefined) return null // loading
-  if (user === null) return <LoginScreen />
-
+function GameApp() {
   const [screen, setScreen] = useState<Screen>('start')
   const [exerciseType, setExerciseType] = useState<ExerciseType>('meerkeuze')
   const [total, setTotal] = useState<number>(20)
@@ -48,11 +39,6 @@ export default function App() {
 
   const currentQuestion = questions[currentIndex]
 
-  // Build feedbackMap for a given question index (pre-answer state)
-  function buildInitialFeedback(qs: Question[], idx: number, type: ExerciseType): Record<string, FeedbackState> {
-    return type !== 'klik' ? { [qs[idx].provinceKey]: 'active' } : {}
-  }
-
   const startGame = useCallback((subject: Subject, exType: ExerciseType, sessionTotal: 20 | 30) => {
     const qs = generateQuestions(subject, sessionTotal)
     setTotal(sessionTotal as number)
@@ -66,7 +52,7 @@ export default function App() {
     setFeedbackMap(buildInitialFeedback(qs, 0, exType))
     setAnswered(false)
     setScreen('game')
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   const startRetry = useCallback((qs: Question[], exType: ExerciseType) => {
     setQuestions(qs)
@@ -98,7 +84,6 @@ export default function App() {
     }
   }, [questions, currentIndex])
 
-  // Called from map in klik mode
   const handleMapClick = useCallback((clickedKey: string) => {
     if (answered) return
     handleAnswer(clickedKey === questions[currentIndex].provinceKey, clickedKey)
@@ -119,9 +104,8 @@ export default function App() {
 
   const reset = useCallback(() => setScreen('start'), [])
 
-  // ---- Screens ----
   if (screen === 'start') return <StartScreen onStart={startGame} />
-  if (screen === 'end')   return (
+  if (screen === 'end') return (
     <EndScreen
       correct={correct}
       total={total}
@@ -135,29 +119,14 @@ export default function App() {
 
   if (!currentQuestion) return null
 
-  // Determine active capital dot
   const activeCapitalKey =
-    (exerciseType !== 'klik' || answered)
-      ? currentQuestion.provinceKey
-      : null
-
-  // In klik mode we also want to show answered province name after click
+    (exerciseType !== 'klik' || answered) ? currentQuestion.provinceKey : null
   const correctProv = PROVINCES.find(p => p.key === currentQuestion.provinceKey)!
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <HUD
-        correct={correct}
-        wrong={wrong}
-        current={currentIndex + 1}
-        total={total}
-        onReset={reset}
-      />
-
-      {/* Main layout */}
+      <HUD correct={correct} wrong={wrong} current={currentIndex + 1} total={total} onReset={reset} />
       <div className="flex-1 flex flex-col md:flex-row">
-
-        {/* Map — SVG sizes itself via viewBox aspect ratio */}
         <div className="md:w-[58%] p-3 md:p-6">
           <NetherlandsMap
             feedbackMap={feedbackMap}
@@ -166,10 +135,7 @@ export default function App() {
             activeCapitalKey={activeCapitalKey}
           />
         </div>
-
-        {/* Question panel */}
         <div className="md:w-[42%] flex flex-col justify-center p-4 md:p-8 md:border-l border-gray-200 bg-white">
-          {/* Klik mode: show province context label when answered */}
           {exerciseType === 'klik' && answered && (
             <div className="text-center mb-4">
               <span className="inline-block bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
@@ -177,7 +143,6 @@ export default function App() {
               </span>
             </div>
           )}
-
           <QuestionPanel
             key={currentIndex}
             question={currentQuestion}
@@ -188,8 +153,6 @@ export default function App() {
             onAnswer={handleAnswer}
             onNext={nextQuestion}
           />
-
-          {/* Question counter */}
           <p className="text-center text-xs text-gray-300 mt-6">
             Vraag {currentIndex + 1} van {total}
           </p>
@@ -197,4 +160,20 @@ export default function App() {
       </div>
     </div>
   )
+}
+
+export default function App() {
+  const [user, setUser] = useState<User | null | undefined>(undefined)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (user === undefined) return null
+  if (user === null) return <LoginScreen />
+  return <GameApp />
 }
