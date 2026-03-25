@@ -3,7 +3,7 @@ import * as d3 from 'd3'
 import { PROVINCES } from '../data/provinces'
 import type { FeedbackState } from '../utils/game'
 
-const GEOJSON_URL = 'https://cartomap.github.io/nl/wgs84/provincie_2023.geojson'
+const GEOJSON_URL = `${import.meta.env.BASE_URL}provincies.geojson`
 const W = 500
 const H = 620
 
@@ -96,8 +96,8 @@ export default function NetherlandsMap({
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
-      className="w-full h-full"
-      style={{ display: 'block', maxHeight: '100%' }}
+      width="100%"
+      style={{ display: 'block' }}
     >
       <defs>
         <filter id="shadow-active" x="-20%" y="-20%" width="140%" height="140%">

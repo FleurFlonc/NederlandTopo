@@ -105,18 +105,16 @@ export default function App() {
       />
 
       {/* Main layout */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row">
 
-        {/* Map */}
-        <div className="md:w-[58%] flex items-center justify-center p-3 md:p-6 md:min-h-0">
-          <div className="w-full h-full max-h-[45vh] md:max-h-none">
-            <NetherlandsMap
-              feedbackMap={feedbackMap}
-              onProvinceClick={exerciseType === 'klik' && !answered ? handleMapClick : undefined}
-              clickable={exerciseType === 'klik' && !answered}
-              activeCapitalKey={activeCapitalKey}
-            />
-          </div>
+        {/* Map — SVG sizes itself via viewBox aspect ratio */}
+        <div className="md:w-[58%] p-3 md:p-6">
+          <NetherlandsMap
+            feedbackMap={feedbackMap}
+            onProvinceClick={exerciseType === 'klik' && !answered ? handleMapClick : undefined}
+            clickable={exerciseType === 'klik' && !answered}
+            activeCapitalKey={activeCapitalKey}
+          />
         </div>
 
         {/* Question panel */}
