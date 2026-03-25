@@ -19,7 +19,7 @@ export default function LoginScreen() {
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
 
     if (err) {
-      setError('Gebruikersnaam of wachtwoord is onjuist.')
+      setError(err.message)
     }
     setLoading(false)
   }
