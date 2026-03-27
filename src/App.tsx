@@ -1,7 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
-import type { User } from '@supabase/supabase-js'
-import { supabase } from './lib/supabase'
-import LoginScreen from './components/LoginScreen'
+import { useState, useCallback } from 'react'
 import {
   type Subject,
   type ExerciseType,
@@ -22,7 +19,7 @@ function buildInitialFeedback(qs: Question[], idx: number, type: ExerciseType): 
   return type !== 'klik' ? { [qs[idx].provinceKey]: 'active' } : {}
 }
 
-function GameApp() {
+export default function GameApp() {
   const [screen, setScreen] = useState<Screen>('start')
   const [exerciseType, setExerciseType] = useState<ExerciseType>('meerkeuze')
   const [total, setTotal] = useState<number>(20)
@@ -162,18 +159,3 @@ function GameApp() {
   )
 }
 
-export default function App() {
-  const [user, setUser] = useState<User | null | undefined>(undefined)
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null)
-    })
-    return () => subscription.unsubscribe()
-  }, [])
-
-  if (user === undefined) return null
-  if (user === null) return <LoginScreen />
-  return <GameApp />
-}
