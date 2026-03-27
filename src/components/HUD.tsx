@@ -1,4 +1,3 @@
-import { supabase } from '../lib/supabase'
 
 interface Props {
   correct: number
@@ -48,14 +47,6 @@ export default function HUD({ correct, wrong, current, total, onReset }: Props) 
           ✕ Stoppen
         </button>
 
-        {/* Logout */}
-        <button
-          onClick={() => supabase.auth.signOut()}
-          title="Uitloggen"
-          className="shrink-0 text-sm text-gray-300 hover:text-gray-500 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          ⎋
-        </button>
       </div>
     </div>
   )
